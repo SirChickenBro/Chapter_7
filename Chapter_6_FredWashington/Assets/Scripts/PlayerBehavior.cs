@@ -12,17 +12,30 @@ public class PlayerBehavior : MonoBehaviour
 
     private Rigidbody _rb;
 
+    public float JumpVelocity = 5f;
+    private bool _isJumping;
+
+    public float DistanceToGround = 0.1f;
+    // 2 
+    public LayerMask GroundLayer;
+    // 3
+    private CapsuleCollider _col;
+
+    public GameObject Bullet;
+    public float BulletSpeed = 100f;
+    private bool _isShooting;
+
     void Start()
     {
         _rb = GetComponent<Rigidbody>();
+        _col = GetComponent<CapsuleCollider>();
     }
     void Update()
     {
-        // 3
+        _isShooting |= Input.GetKeyDown(KeyCode.Space);
+        _isJumping |= Input.GetKeyDown(KeyCode.J);
         _vInput = Input.GetAxis("Vertical") * MoveSpeed;
-        // 4
         _hInput = Input.GetAxis("Horizontal") * RotateSpeed;
-        // 5
         /*
         this.transform.Translate(Vector3.forward * _vInput *
         Time.deltaTime);
@@ -43,5 +56,47 @@ public class PlayerBehavior : MonoBehaviour
             this.transform.forward * _vInput * Time.fixedDeltaTime);
         // 5
         _rb.MoveRotation(_rb.rotation * angleRot);
+
+        if (IsGrounded() && _isJumping)
+        {
+            _rb.AddForce(Vector3.up * JumpVelocity,
+                 ForceMode.Impulse);
+        }
+        _isJumping = false;
+
+        if (_isShooting)
+        {
+            // 5
+            Vector3 spawnPos = transform.position + 
+                                   transform.forward * 1f;
+            // 6
+            GameObject newBullet = Instantiate(Bullet, spawnPos, 
+                                       this.transform.rotation);
+            // 7
+            Rigidbody bulletRB = 
+                newBullet.GetComponent<Rigidbody>();
+ 
+            // 8
+            bulletRB.linearVelocity = this.transform.forward * 
+                                          BulletSpeed;
+        }
+        // 9
+        _isShooting = false;
+    
+    }
+
+    private bool IsGrounded()
+    {
+        // 7
+        Vector3 capsuleBottom = new Vector3(_col.bounds.center.x,
+            _col.bounds.min.y, _col.bounds.center.z);
+
+        // 8
+        bool grounded = Physics.CheckCapsule(_col.bounds.center,
+            capsuleBottom, DistanceToGround, GroundLayer,
+                QueryTriggerInteraction.Ignore);
+
+        // 9
+        return grounded;
     }
 }
